@@ -1,31 +1,36 @@
 pipeline {
-    agent { docker 'public.ecr.aws/docker/library/golang:latest' }
-    environment {
-      GOCACHE = "${env.WORKSPACE}/.build_cache"
+    agent { label 'linux' }
+    tools {
+      maven 'Maven-3.8.4'
     }
-    options {
-        buildDiscarder(logRotator(daysToKeepStr: '10', numToKeepStr: '10'))
-        timeout(time: 1, unit: 'HOURS')
-        timestamps()
-    }
-
     stages {
         stage('Source') {
             steps {
-                sh 'which go'
-                sh 'go version'
-                git branch: 'stable',
-                    url: 'https://github.com/gohugoio/hugo.git'
+                sh 'mvn --version'
+                sh 'git --version'
+                git branch: 'main',
+                    url: 'https://github.com/LinkedInLearning/essential-jenkins-2468076.git'
             }
         }
-        stage('Build') {
+        stage('Clean') {
             steps {
-                sh "go build --tags extended"
+                dir("${env.WORKSPACE}/Ch04/04_02-ssh-agent"){
+                    sh 'mvn clean'
+                }
             }
         }
         stage('Test') {
             steps {
-                sh './hugo env'
+                dir("${env.WORKSPACE}/Ch04/04_02-ssh-agent"){
+                    sh 'mvn test'
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                dir("${env.WORKSPACE}/Ch04/04_02-ssh-agent"){
+                    sh 'mvn package -DskipTests'
+                }
             }
         }
     }
